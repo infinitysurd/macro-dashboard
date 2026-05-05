@@ -204,38 +204,17 @@ def build_table(tickers: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def styled_dataframe(df: pd.DataFrame):
-    """Apply green/red colour-coding to % columns."""
-    def colour_pct(val):
-        if pd.isna(val):
-            return "color: #555"
-        return "color: #00cc66" if val >= 0 else "color: #ff3333"
-
-    pct_cols = [c for c in df.columns if "%" in c]
-    styled = df.style.applymap(colour_pct, subset=pct_cols).format(
-        {c: "{:+.2f}%" for c in pct_cols},
-        na_rep="—",
-    ).format(
-        {"Last": lambda x: f"{x:,.4f}" if pd.notna(x) else "—",
-         "Day Chg": lambda x: f"{x:+.4f}" if pd.notna(x) else "—"},
-        na_rep="—",
-    ).set_properties(**{
-        "background-color": "#111",
-        "color": "#ddd",
-        "font-family": "Consolas, monospace",
-        "font-size": "12px",
-    }).set_table_styles([
-        {"selector": "th", "props": [
-            ("background-color", "#1a1a1a"),
-            ("color", "#f0b429"),
-            ("font-size", "11px"),
-            ("letter-spacing", "1px"),
-            ("text-transform", "uppercase"),
-            ("border-bottom", "1px solid #333"),
-        ]},
-        {"selector": "tr:hover td", "props": [("background-color", "#1a1a1a")]},
-    ])
-    return styled
+def render_table(df: pd.DataFrame):
+    """Render a price table using Streamlit column_config — no jinja2 required."""
+    col_cfg = {}
+    for c in df.columns:
+        if "%" in c:
+            col_cfg[c] = st.column_config.NumberColumn(c, format="%.2f %%")
+        elif c == "Last":
+            col_cfg[c] = st.column_config.NumberColumn("Last", format="%.4f")
+        elif c == "Day Chg":
+            col_cfg[c] = st.column_config.NumberColumn("Day Chg", format="%.4f")
+    st.dataframe(df, use_container_width=True, hide_index=True, column_config=col_cfg)
 
 
 def metric_strip(df: pd.DataFrame):
@@ -474,7 +453,7 @@ with base_tab:
         st.markdown(f'<div class="section-label">▸ {section}</div>', unsafe_allow_html=True)
         df = build_table(tickers)
         metric_strip(df)
-        st.dataframe(styled_dataframe(df), use_container_width=True, hide_index=True)
+        render_table(df)
 
     st.markdown('<div class="section-label">▸ Relative Performance (6-Month, % Return)</div>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -500,7 +479,7 @@ with rates_tab:
     st.markdown('<div class="section-label">▸ Treasury Yields</div>', unsafe_allow_html=True)
     rates_df = build_table(BASE_TICKERS["Rates"])
     metric_strip(rates_df)
-    st.dataframe(styled_dataframe(rates_df), use_container_width=True, hide_index=True)
+    render_table(rates_df)
 
     # Curve spreads
     rmap = {r["Name"]: r["Last"] for _, r in rates_df.iterrows() if r["Last"] is not None}
@@ -533,7 +512,7 @@ with fx_tab:
     st.markdown('<div class="section-label">▸ FX Rates</div>', unsafe_allow_html=True)
     fx_df = build_table(BASE_TICKERS["FX"])
     metric_strip(fx_df)
-    st.dataframe(styled_dataframe(fx_df), use_container_width=True, hide_index=True)
+    render_table(fx_df)
 
     st.markdown('<div class="section-label">▸ DXY & Key Pairs — 6-Month Trend</div>', unsafe_allow_html=True)
     plotly_multi_line({
@@ -561,7 +540,7 @@ with focus_tab:
     st.write("Aligned to the morning macro brief. Covers TLT, MDI (TSX), CAR.UN, IBIT, BTC, USD/INR, 10Y, 30Y, VIX.")
     focus_df = build_table(FOCUS_TICKERS)
     metric_strip(focus_df)
-    st.dataframe(styled_dataframe(focus_df), use_container_width=True, hide_index=True)
+    render_table(focus_df)
 
     c1, c2, c3 = st.columns(3)
     with c1:
@@ -653,7 +632,7 @@ with brief_tab:
                     "USD/JPY":  "JPY=X",
                 })
                 metric_strip(_live.head(4))
-                st.dataframe(styled_dataframe(_live), use_container_width=True, hide_index=True)
+                render_table(_live)
 
                 st.markdown('<div class="section-label" style="margin-top:12px">▸ Key Charts</div>', unsafe_allow_html=True)
                 plotly_line("^TNX",   "10Y Yield",   color="#f0b429", height=160)
@@ -689,7 +668,7 @@ with brief_tab:
             "USD/INR":  "INR=X",
         })
         metric_strip(_snap_df.head(4))
-        st.dataframe(styled_dataframe(_snap_df), use_container_width=True, hide_index=True)
+        render_table(_snap_df)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 6 — CROSS-ASSET RISK
