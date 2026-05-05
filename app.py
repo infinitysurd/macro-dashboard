@@ -16,16 +16,16 @@ st.set_page_config(
     page_icon="📈",
 )
 
-# ── Colour palette ────────────────────────────────────────────────────────────
-BG        = "#1e1e1e"
-SURFACE   = "#252526"
-SURFACE2  = "#2d2d30"
-BORDER    = "#3e3e42"
-TXT       = "#d4d4d4"
-TXT_MUTED = "#858585"
-ACCENT    = "#f0b429"
-UP        = "#00cc66"
-DOWN      = "#f44747"
+# ── Colour palette — light grey ───────────────────────────────────────────────
+BG        = "#f0f2f5"   # page background   (light grey)
+SURFACE   = "#ffffff"   # cards / panels     (white)
+SURFACE2  = "#e4e6ea"   # raised / alt rows  (mid grey)
+BORDER    = "#ced0d4"   # borders
+TXT       = "#1c1e21"   # primary text       (near black)
+TXT_MUTED = "#606770"   # captions / labels
+ACCENT    = "#b8860b"   # dark-amber gold    (readable on white)
+UP        = "#0a7a3c"   # green
+DOWN      = "#cc1f1f"   # red
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -42,52 +42,66 @@ html, body,
     background-color: {SURFACE} !important;
     border-right: 1px solid {BORDER} !important;
 }}
+[data-testid="stSidebar"] * {{ color: {TXT} !important; }}
+/* header */
 .dash-header {{
-    background: linear-gradient(90deg, {SURFACE} 0%, {SURFACE2} 60%, {SURFACE} 100%);
+    background: linear-gradient(90deg, {SURFACE2} 0%, {SURFACE} 60%, {SURFACE2} 100%);
     border-bottom: 2px solid {ACCENT};
     padding: 12px 24px 10px;
     margin-bottom: 14px;
     border-radius: 0 0 4px 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }}
 .dash-header h1 {{ color:{ACCENT}; margin:0; font-size:1.2rem; letter-spacing:3px; font-weight:700; }}
 .dash-header small {{ color:{TXT_MUTED}; font-size:0.7rem; letter-spacing:1px; }}
+/* metric cards */
 [data-testid="stMetric"] {{
-    background-color:{SURFACE} !important; border:1px solid {BORDER} !important;
-    border-radius:6px !important; padding:10px 14px !important;
+    background-color:{SURFACE} !important;
+    border:1px solid {BORDER} !important;
+    border-radius:6px !important;
+    padding:10px 14px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }}
 [data-testid="stMetricLabel"]  {{ color:{TXT_MUTED}!important; font-size:0.67rem!important; letter-spacing:1px!important; text-transform:uppercase!important; }}
 [data-testid="stMetricValue"]  {{ color:{TXT}!important; font-size:1.05rem!important; font-weight:700!important; }}
 [data-testid="stMetricDelta"] svg {{ display:none!important; }}
-[data-testid="stMetricDelta"][data-direction="up"]   {{ color:{UP}!important; }}
-[data-testid="stMetricDelta"][data-direction="down"] {{ color:{DOWN}!important; }}
+[data-testid="stMetricDelta"][data-direction="up"]   {{ color:{UP}!important; font-weight:600!important; }}
+[data-testid="stMetricDelta"][data-direction="down"] {{ color:{DOWN}!important; font-weight:600!important; }}
+/* tabs */
 [data-testid="stTabs"] button {{
     color:{TXT_MUTED}!important; font-size:0.75rem!important;
     letter-spacing:1px!important; text-transform:uppercase!important;
     border-bottom:2px solid transparent!important; padding:8px 16px!important;
 }}
 [data-testid="stTabs"] button[aria-selected="true"] {{
-    color:{ACCENT}!important; border-bottom:2px solid {ACCENT}!important; background:transparent!important;
+    color:{ACCENT}!important; border-bottom:2px solid {ACCENT}!important;
+    background:transparent!important; font-weight:700!important;
 }}
 [data-testid="stTabs"] [role="tablist"] {{ border-bottom:1px solid {BORDER}!important; }}
+/* section labels */
 .sec {{
     color:{ACCENT}; font-size:0.67rem; letter-spacing:2px; text-transform:uppercase;
-    font-weight:600; border-bottom:1px solid {BORDER}; padding-bottom:5px; margin:16px 0 10px 0;
+    font-weight:700; border-bottom:1px solid {BORDER}; padding-bottom:5px; margin:16px 0 10px 0;
 }}
-.badge-on  {{ background:#0d2b1f; color:{UP};      border:1px solid {UP};      padding:3px 12px; border-radius:4px; font-size:0.74rem; font-weight:600; }}
-.badge-off {{ background:#2b0d0d; color:{DOWN};    border:1px solid {DOWN};    padding:3px 12px; border-radius:4px; font-size:0.74rem; font-weight:600; }}
-.badge-neu {{ background:#2b2400; color:#ffcc00;   border:1px solid #ffcc00;   padding:3px 12px; border-radius:4px; font-size:0.74rem; font-weight:600; }}
-.intel-card {{
-    background:{SURFACE}; border:1px solid {BORDER}; border-radius:6px;
-    padding:14px 16px; margin-bottom:10px;
-}}
-.intel-title {{ color:{ACCENT}; font-size:0.8rem; font-weight:700; letter-spacing:1px; margin-bottom:8px; }}
+/* risk badges */
+.badge-on  {{ background:#d4f4e2; color:{UP};   border:1px solid {UP};   padding:3px 12px; border-radius:4px; font-size:0.74rem; font-weight:700; }}
+.badge-off {{ background:#fde8e8; color:{DOWN}; border:1px solid {DOWN}; padding:3px 12px; border-radius:4px; font-size:0.74rem; font-weight:700; }}
+.badge-neu {{ background:#fef9e7; color:#7d6608; border:1px solid #c8a416; padding:3px 12px; border-radius:4px; font-size:0.74rem; font-weight:700; }}
+/* inputs */
 textarea, [data-baseweb="textarea"] textarea {{
     background-color:{SURFACE}!important; color:{TXT}!important;
     font-size:0.82rem!important; border:1px solid {BORDER}!important; border-radius:4px!important;
 }}
-[data-testid="stDataFrame"] {{ border:1px solid {BORDER}!important; border-radius:4px; }}
+input, [data-baseweb="input"] input {{
+    background-color:{SURFACE}!important; color:{TXT}!important;
+    border:1px solid {BORDER}!important;
+}}
+/* dataframe */
+[data-testid="stDataFrame"] {{ border:1px solid {BORDER}!important; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }}
+/* divider */
 hr {{ border-color:{BORDER}!important; margin:8px 0!important; }}
-::-webkit-scrollbar {{ width:6px; height:6px; }}
+/* scrollbar */
+::-webkit-scrollbar {{ width:5px; height:5px; }}
 ::-webkit-scrollbar-track {{ background:{BG}; }}
 ::-webkit-scrollbar-thumb {{ background:{BORDER}; border-radius:3px; }}
 </style>
@@ -100,8 +114,10 @@ PT_BASE = dict(
     font=dict(color=TXT_MUTED, family="Segoe UI, sans-serif", size=11),
     margin=dict(l=52, r=20, t=44, b=36),
 )
-XAXIS_STYLE = dict(gridcolor=SURFACE2, linecolor=BORDER, showgrid=True, zeroline=False, tickfont=dict(size=10))
-YAXIS_STYLE = dict(gridcolor=SURFACE2, linecolor=BORDER, showgrid=True, zeroline=False, tickfont=dict(size=10))
+XAXIS_STYLE = dict(gridcolor=SURFACE2, linecolor=BORDER, showgrid=True, zeroline=False,
+                   tickfont=dict(size=10, color=TXT_MUTED))
+YAXIS_STYLE = dict(gridcolor=SURFACE2, linecolor=BORDER, showgrid=True, zeroline=False,
+                   tickfont=dict(size=10, color=TXT_MUTED))
 
 def theme(fig, height: int = 320, title: str = ""):
     """Apply standard dark-grey theme to any figure."""
@@ -150,8 +166,9 @@ def sec(label: str):
 
 def no_data(label: str):
     st.markdown(
-        f'<div style="background:{SURFACE};border:1px solid {BORDER};border-radius:6px;'
-        f'padding:20px;text-align:center;color:{TXT_MUTED};font-size:0.8rem;">No data — {label}</div>',
+        f'<div style="background:{SURFACE2};border:1px solid {BORDER};border-radius:6px;'
+        f'padding:20px;text-align:center;color:{TXT_MUTED};font-size:0.8rem;">'
+        f'⚠ No data available — {label}</div>',
         unsafe_allow_html=True)
 
 # ── Data helpers ──────────────────────────────────────────────────────────────
