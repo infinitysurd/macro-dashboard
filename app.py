@@ -7,7 +7,7 @@ from plotly.subplots import make_subplots
 from datetime import datetime
 import re
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Macro Market Dashboard",
     layout="wide",
@@ -15,93 +15,138 @@ st.set_page_config(
     page_icon="📈",
 )
 
-# ── Bloomberg-style dark theme CSS ───────────────────────────────────────────
-st.markdown("""
+# ── Colour palette ────────────────────────────────────────────────────────────
+BG        = "#1e1e1e"   # main background  (dark charcoal)
+SURFACE   = "#252526"   # cards / sidebar
+SURFACE2  = "#2d2d30"   # raised elements
+BORDER    = "#3e3e42"   # borders
+TXT       = "#d4d4d4"   # primary text
+TXT_MUTED = "#858585"   # captions / labels
+ACCENT    = "#f0b429"   # amber-gold (labels, active tabs)
+UP        = "#00cc66"   # positive / green
+DOWN      = "#f44747"   # negative / red
+
+# ── Dark-grey CSS ─────────────────────────────────────────────────────────────
+st.markdown(f"""
 <style>
-/* ---- global dark background ---- */
-html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
-    background-color: #0d0d0d !important;
-    color: #e0e0e0 !important;
-    font-family: 'Consolas', 'Courier New', monospace !important;
-}
-[data-testid="stSidebar"] {
-    background-color: #111111 !important;
-    border-right: 1px solid #222 !important;
-}
-/* ---- header bar ---- */
-.main-header {
-    background: linear-gradient(90deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
-    border-bottom: 1px solid #f0b429;
-    padding: 10px 20px;
-    margin-bottom: 16px;
-}
-.main-header h1 { color: #f0b429; margin: 0; font-size: 1.4rem; letter-spacing: 2px; }
-.main-header small { color: #888; font-size: 0.75rem; letter-spacing: 1px; }
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stApp"],
+[data-testid="block-container"] {{
+    background-color: {BG} !important;
+    color: {TXT} !important;
+    font-family: 'Segoe UI', 'Inter', sans-serif !important;
+}}
+[data-testid="stSidebar"] {{
+    background-color: {SURFACE} !important;
+    border-right: 1px solid {BORDER} !important;
+}}
+/* header */
+.dash-header {{
+    background: linear-gradient(90deg, {SURFACE} 0%, {SURFACE2} 50%, {SURFACE} 100%);
+    border-bottom: 2px solid {ACCENT};
+    padding: 12px 24px 10px;
+    margin-bottom: 14px;
+    border-radius: 0 0 4px 4px;
+}}
+.dash-header h1 {{
+    color: {ACCENT};
+    margin: 0;
+    font-size: 1.25rem;
+    letter-spacing: 3px;
+    font-weight: 700;
+    font-family: 'Segoe UI', monospace;
+}}
+.dash-header small {{ color: {TXT_MUTED}; font-size: 0.72rem; letter-spacing: 1px; }}
 
-/* ---- metric cards ---- */
-[data-testid="stMetric"] {
-    background-color: #161616 !important;
-    border: 1px solid #2a2a2a !important;
-    border-radius: 4px !important;
-    padding: 8px 12px !important;
-    margin: 2px !important;
-}
-[data-testid="stMetricLabel"] { color: #888 !important; font-size: 0.7rem !important; letter-spacing: 1px !important; text-transform: uppercase !important; }
-[data-testid="stMetricValue"] { color: #f0f0f0 !important; font-size: 1.1rem !important; font-weight: bold !important; }
-[data-testid="stMetricDelta"] svg { display: none !important; }
+/* metric cards */
+[data-testid="stMetric"] {{
+    background-color: {SURFACE} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 6px !important;
+    padding: 10px 14px !important;
+}}
+[data-testid="stMetricLabel"] {{
+    color: {TXT_MUTED} !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+}}
+[data-testid="stMetricValue"] {{
+    color: {TXT} !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+}}
+[data-testid="stMetricDelta"] svg {{ display: none !important; }}
+[data-testid="stMetricDelta"][data-direction="up"]   {{ color: {UP}   !important; }}
+[data-testid="stMetricDelta"][data-direction="down"] {{ color: {DOWN} !important; }}
 
-/* ---- positive/negative deltas ---- */
-[data-testid="stMetricDelta"][data-direction="up"]   { color: #00cc66 !important; }
-[data-testid="stMetricDelta"][data-direction="down"] { color: #ff3333 !important; }
-
-/* ---- dataframe ---- */
-[data-testid="stDataFrame"] { border: 1px solid #222 !important; }
-.dvn-scroller { background-color: #0d0d0d !important; }
-
-/* ---- tabs ---- */
-[data-testid="stTabs"] button {
-    color: #888 !important;
-    font-size: 0.8rem !important;
+/* tabs */
+[data-testid="stTabs"] button {{
+    color: {TXT_MUTED} !important;
+    font-size: 0.78rem !important;
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
     border-bottom: 2px solid transparent !important;
-}
-[data-testid="stTabs"] button[aria-selected="true"] {
-    color: #f0b429 !important;
-    border-bottom: 2px solid #f0b429 !important;
+    padding: 8px 16px !important;
+}}
+[data-testid="stTabs"] button[aria-selected="true"] {{
+    color: {ACCENT} !important;
+    border-bottom: 2px solid {ACCENT} !important;
     background: transparent !important;
-}
+}}
+[data-testid="stTabs"] [role="tablist"] {{
+    border-bottom: 1px solid {BORDER} !important;
+}}
 
-/* ---- section labels ---- */
-.section-label {
-    color: #f0b429;
-    font-size: 0.7rem;
+/* section labels */
+.sec {{
+    color: {ACCENT};
+    font-size: 0.68rem;
     letter-spacing: 2px;
     text-transform: uppercase;
-    border-bottom: 1px solid #222;
-    padding-bottom: 4px;
-    margin: 12px 0 8px 0;
-}
+    font-weight: 600;
+    border-bottom: 1px solid {BORDER};
+    padding-bottom: 5px;
+    margin: 16px 0 10px 0;
+}}
 
-/* ---- risk badge ---- */
-.badge-risk-on  { background:#003300; color:#00cc66; border:1px solid #00cc66; padding:2px 10px; border-radius:3px; font-size:0.75rem; letter-spacing:1px; }
-.badge-risk-off { background:#330000; color:#ff3333; border:1px solid #ff3333; padding:2px 10px; border-radius:3px; font-size:0.75rem; letter-spacing:1px; }
-.badge-neutral  { background:#1a1a00; color:#ffcc00; border:1px solid #ffcc00; padding:2px 10px; border-radius:3px; font-size:0.75rem; letter-spacing:1px; }
+/* risk badges */
+.badge-on  {{ background:#0d2b1f; color:{UP};   border:1px solid {UP};   padding:3px 12px; border-radius:4px; font-size:0.75rem; letter-spacing:1px; font-weight:600; }}
+.badge-off {{ background:#2b0d0d; color:{DOWN}; border:1px solid {DOWN}; padding:3px 12px; border-radius:4px; font-size:0.75rem; letter-spacing:1px; font-weight:600; }}
+.badge-neu {{ background:#2b2400; color:#ffcc00; border:1px solid #ffcc00; padding:3px 12px; border-radius:4px; font-size:0.75rem; letter-spacing:1px; font-weight:600; }}
 
-/* ---- text input / text area ---- */
-textarea, [data-baseweb="textarea"] textarea {
-    background-color: #111 !important;
-    color: #ccc !important;
-    font-family: monospace !important;
-    font-size: 0.8rem !important;
-    border: 1px solid #333 !important;
-}
-/* ---- scrollbar ---- */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0d0d0d; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+/* text area */
+textarea, [data-baseweb="textarea"] textarea {{
+    background-color: {SURFACE} !important;
+    color: {TXT} !important;
+    font-size: 0.82rem !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 4px !important;
+}}
+
+/* dataframe */
+[data-testid="stDataFrame"] {{ border: 1px solid {BORDER} !important; border-radius: 4px; }}
+
+/* scrollbar */
+::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+::-webkit-scrollbar-track {{ background: {BG}; }}
+::-webkit-scrollbar-thumb {{ background: {BORDER}; border-radius: 3px; }}
+
+/* divider */
+hr {{ border-color: {BORDER} !important; margin: 8px 0 !important; }}
 </style>
 """, unsafe_allow_html=True)
+
+# ── Plotly theme (matches grey palette) ───────────────────────────────────────
+PT = dict(
+    paper_bgcolor=BG,
+    plot_bgcolor=SURFACE,
+    font=dict(color=TXT_MUTED, family="Segoe UI, sans-serif", size=11),
+    xaxis=dict(gridcolor=SURFACE2, linecolor=BORDER, showgrid=True, zeroline=False),
+    yaxis=dict(gridcolor=SURFACE2, linecolor=BORDER, showgrid=True, zeroline=False),
+    margin=dict(l=48, r=16, t=40, b=32),
+)
 
 # ── Ticker universe ───────────────────────────────────────────────────────────
 BASE_TICKERS = {
@@ -112,11 +157,11 @@ BASE_TICKERS = {
         "30Y": "^TYX",
     },
     "Equities": {
-        "S&P 500":    "^GSPC",
-        "Dow":        "^DJI",
-        "Nasdaq":     "^IXIC",
+        "S&P 500":      "^GSPC",
+        "Dow":          "^DJI",
+        "Nasdaq":       "^IXIC",
         "Russell 2000": "^RUT",
-        "VIX":        "^VIX",
+        "VIX":          "^VIX",
     },
     "FX": {
         "EUR/USD": "EURUSD=X",
@@ -145,23 +190,21 @@ FOCUS_TICKERS = {
     "VIX":     "^VIX",
 }
 
-YIELD_CURVE = {
-    "2Y (^IRX)":  ("^IRX",  2),
-    "5Y (^FVX)":  ("^FVX",  5),
-    "10Y (^TNX)": ("^TNX", 10),
-    "30Y (^TYX)": ("^TYX", 30),
-}
+YIELD_CURVE = {"2Y": ("^IRX", 2), "5Y": ("^FVX", 5), "10Y": ("^TNX", 10), "30Y": ("^TYX", 30)}
 
-PLOTLY_DARK = dict(
-    paper_bgcolor="#0d0d0d",
-    plot_bgcolor="#111111",
-    font=dict(color="#aaa", family="Consolas, monospace", size=11),
-    xaxis=dict(gridcolor="#1f1f1f", linecolor="#333", showgrid=True),
-    yaxis=dict(gridcolor="#1f1f1f", linecolor="#333", showgrid=True),
-    margin=dict(l=40, r=20, t=36, b=30),
-)
+# ── Utility ───────────────────────────────────────────────────────────────────
+def hex_rgba(hex_color: str, alpha: float = 0.12) -> str:
+    """Convert #rrggbb to rgba(r,g,b,a)."""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
 
-# ── Data helpers ─────────────────────────────────────────────────────────────
+
+def sec(label: str):
+    st.markdown(f'<div class="sec">▸ {label}</div>', unsafe_allow_html=True)
+
+
+# ── Data helpers ──────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300)
 def load_history(symbol: str, period: str = "6mo", interval: str = "1d") -> pd.DataFrame:
     try:
@@ -193,19 +236,18 @@ def build_table(tickers: dict) -> pd.DataFrame:
             if len(df) > 63:
                 m3 = ((df["Close"].iloc[-1] / df["Close"].iloc[-64]) - 1) * 100
         rows.append({
-            "Name":   name,
-            "Ticker": symbol,
-            "Last":   round(last, 4) if last is not None else None,
-            "Day Chg": round(chg, 4) if chg is not None else None,
-            "Day %":  round(pct, 2)  if pct is not None else None,
-            "1M %":   round(m1, 2)   if m1  is not None else None,
-            "3M %":   round(m3, 2)   if m3  is not None else None,
+            "Name":    name,
+            "Ticker":  symbol,
+            "Last":    round(last, 4) if last  is not None else None,
+            "Day Chg": round(chg,  4) if chg   is not None else None,
+            "Day %":   round(pct,  2) if pct   is not None else None,
+            "1M %":    round(m1,   2) if m1    is not None else None,
+            "3M %":    round(m3,   2) if m3    is not None else None,
         })
     return pd.DataFrame(rows)
 
 
 def render_table(df: pd.DataFrame):
-    """Render a price table using Streamlit column_config — no jinja2 required."""
     col_cfg = {}
     for c in df.columns:
         if "%" in c:
@@ -220,118 +262,150 @@ def render_table(df: pd.DataFrame):
 def metric_strip(df: pd.DataFrame):
     cols = st.columns(len(df))
     for col, (_, row) in zip(cols, df.iterrows()):
-        val = "—" if pd.isna(row["Last"]) else f"{row['Last']:,.2f}"
-        d   = "—" if pd.isna(row["Day %"]) else f"{row['Day %']:+.2f}%"
+        last = row.get("Last")
+        pct  = row.get("Day %")
+        val  = "—" if (last is None or (isinstance(last, float) and pd.isna(last))) else f"{last:,.2f}"
+        d    = None if (pct  is None or (isinstance(pct,  float) and pd.isna(pct)))  else f"{pct:+.2f}%"
         col.metric(row["Name"], val, d)
 
 
-# ── Plotly chart helpers ──────────────────────────────────────────────────────
-def plotly_line(symbol: str, title: str, color: str = "#f0b429", height: int = 240):
+# ── Chart helpers ─────────────────────────────────────────────────────────────
+def _no_data(title: str):
+    st.markdown(
+        f'<div style="background:{SURFACE};border:1px solid {BORDER};border-radius:6px;'
+        f'padding:24px;text-align:center;color:{TXT_MUTED};font-size:0.8rem;">'
+        f'No data available — {title}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def plotly_line(symbol: str, title: str, color: str = ACCENT, height: int = 300):
     df = load_history(symbol)
     if df is None or df.empty:
-        st.warning(f"No data: {title}")
+        _no_data(title)
         return
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=df.index, y=df["Close"],
         mode="lines",
-        line=dict(color=color, width=1.5),
+        line=dict(color=color, width=2),
         fill="tozeroy",
-        fillcolor=color.replace("#", "rgba(").rstrip(")") + ",0.07)" if color.startswith("#") else "rgba(240,180,41,0.07)",
+        fillcolor=hex_rgba(color, 0.08),
         name=title,
-        hovertemplate="%{x|%b %d}<br><b>%{y:.4f}</b><extra></extra>",
+        hovertemplate="<b>%{x|%b %d, %Y}</b><br>%{y:.4f}<extra></extra>",
     ))
-    fig.update_layout(title=dict(text=title, font=dict(color="#f0b429", size=12)),
-                      height=height, showlegend=False, **PLOTLY_DARK)
+    fig.update_layout(
+        title=dict(text=title, font=dict(color=ACCENT, size=12), x=0),
+        height=height,
+        showlegend=False,
+        **PT,
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plotly_candle(symbol: str, title: str, period: str = "3mo", height: int = 320):
+def plotly_candle(symbol: str, title: str, period: str = "3mo", height: int = 360):
     df = load_history(symbol, period=period)
     if df is None or df.empty:
-        st.warning(f"No data: {title}")
+        _no_data(title)
         return
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                        row_heights=[0.75, 0.25], vertical_spacing=0.02)
+
+    has_volume = "Volume" in df.columns and df["Volume"].sum() > 0
+    rows_cfg = [0.78, 0.22] if has_volume else [1.0]
+    n_rows   = 2 if has_volume else 1
+
+    fig = make_subplots(
+        rows=n_rows, cols=1,
+        shared_xaxes=True,
+        row_heights=rows_cfg,
+        vertical_spacing=0.03,
+    )
     fig.add_trace(go.Candlestick(
         x=df.index,
         open=df["Open"], high=df["High"], low=df["Low"], close=df["Close"],
-        increasing_line_color="#00cc66", decreasing_line_color="#ff3333",
+        increasing=dict(line=dict(color=UP),   fillcolor=hex_rgba(UP,   0.6)),
+        decreasing=dict(line=dict(color=DOWN),  fillcolor=hex_rgba(DOWN, 0.6)),
         name=title,
+        hoverlabel=dict(bgcolor=SURFACE2),
     ), row=1, col=1)
-    fig.add_trace(go.Bar(
-        x=df.index, y=df["Volume"],
-        marker_color=[
-            "#00cc66" if c >= o else "#ff3333"
-            for c, o in zip(df["Close"], df["Open"])
-        ],
-        name="Volume",
-        showlegend=False,
-    ), row=2, col=1)
+
+    if has_volume:
+        vol_colors = [UP if c >= o else DOWN
+                      for c, o in zip(df["Close"], df["Open"])]
+        fig.add_trace(go.Bar(
+            x=df.index, y=df["Volume"],
+            marker_color=[hex_rgba(c, 0.7) for c in vol_colors],
+            name="Volume",
+            showlegend=False,
+        ), row=2, col=1)
+
     fig.update_layout(
-        title=dict(text=title, font=dict(color="#f0b429", size=12)),
-        height=height, xaxis_rangeslider_visible=False, showlegend=False,
-        **PLOTLY_DARK,
+        title=dict(text=title, font=dict(color=ACCENT, size=12), x=0),
+        height=height,
+        xaxis_rangeslider_visible=False,
+        showlegend=False,
+        **PT,
     )
-    fig.update_yaxes(gridcolor="#1f1f1f", linecolor="#333")
+    fig.update_yaxes(gridcolor=SURFACE2, linecolor=BORDER)
     st.plotly_chart(fig, use_container_width=True)
 
 
 def plotly_yield_curve():
-    """Snapshot yield curve: 2Y, 5Y, 10Y, 30Y."""
-    tenors, yields, colors = [], [], []
+    tenors, yields = [], []
     for label, (sym, tenor) in YIELD_CURVE.items():
         df = load_history(sym)
         if df is not None and not df.empty:
-            y = float(df["Close"].iloc[-1])
             tenors.append(tenor)
-            yields.append(y)
+            yields.append(float(df["Close"].iloc[-1]))
     if not tenors:
-        st.warning("No yield data available")
+        _no_data("Yield Curve")
         return
-    labels = [f"{t}Y" for t in tenors]
-    color  = "#f0b429"
     fig = go.Figure()
     fig.add_trace(go.Scatter(
-        x=tenors, y=yields, mode="lines+markers+text",
+        x=tenors, y=yields,
+        mode="lines+markers+text",
         text=[f"{y:.2f}%" for y in yields],
         textposition="top center",
-        textfont=dict(color="#f0b429", size=11),
-        line=dict(color=color, width=2),
-        marker=dict(color=color, size=8),
-        hovertemplate="<b>%{x}Y</b><br>%{y:.3f}%<extra></extra>",
+        textfont=dict(color=ACCENT, size=11, family="Segoe UI"),
+        line=dict(color=ACCENT, width=2.5),
+        marker=dict(color=ACCENT, size=9, line=dict(color=BG, width=2)),
+        fill="tozeroy",
+        fillcolor=hex_rgba(ACCENT, 0.07),
+        hovertemplate="<b>%{x}Y</b>: %{y:.3f}%<extra></extra>",
     ))
     fig.update_layout(
-        title=dict(text="U.S. Treasury Yield Curve (Snapshot)", font=dict(color="#f0b429", size=12)),
-        xaxis=dict(tickvals=tenors, ticktext=labels, gridcolor="#1f1f1f"),
-        yaxis=dict(tickformat=".2f", ticksuffix="%", gridcolor="#1f1f1f"),
-        height=280,
-        **PLOTLY_DARK,
+        title=dict(text="U.S. Treasury Yield Curve", font=dict(color=ACCENT, size=12), x=0),
+        xaxis=dict(tickvals=tenors, ticktext=[f"{t}Y" for t in tenors], gridcolor=SURFACE2),
+        yaxis=dict(tickformat=".2f", ticksuffix="%", gridcolor=SURFACE2),
+        height=300,
+        **PT,
     )
     st.plotly_chart(fig, use_container_width=True)
 
 
-def plotly_multi_line(symbols_colors: dict, title: str, height: int = 280, pct_base: bool = True):
-    """Overlay multiple tickers normalised to 100 (% return basis)."""
+def plotly_multi_line(series_map: dict, title: str, height: int = 320, pct_base: bool = True):
+    """Overlay multiple tickers. series_map = {label: (symbol, color)}"""
     fig = go.Figure()
-    for label, (sym, color) in symbols_colors.items():
+    for label, (sym, color) in series_map.items():
         df = load_history(sym)
         if df is None or df.empty:
             continue
-        series = df["Close"]
+        y = df["Close"]
         if pct_base:
-            series = (series / series.iloc[0] - 1) * 100
+            y = (y / y.iloc[0] - 1) * 100
         fig.add_trace(go.Scatter(
-            x=df.index, y=series,
+            x=df.index, y=y,
             mode="lines", name=label,
-            line=dict(color=color, width=1.5),
+            line=dict(color=color, width=1.8),
             hovertemplate=f"<b>{label}</b>: %{{y:.2f}}<extra></extra>",
         ))
     fig.update_layout(
-        title=dict(text=title, font=dict(color="#f0b429", size=12)),
+        title=dict(text=title, font=dict(color=ACCENT, size=12), x=0),
         height=height,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, bgcolor="rgba(0,0,0,0)"),
-        **PLOTLY_DARK,
+        legend=dict(
+            orientation="h", yanchor="bottom", y=1.02,
+            bgcolor="rgba(0,0,0,0)", font=dict(size=10),
+        ),
+        **PT,
     )
     if pct_base:
         fig.update_yaxes(ticksuffix="%")
@@ -339,451 +413,382 @@ def plotly_multi_line(symbols_colors: dict, title: str, height: int = 280, pct_b
 
 
 # ── Brief parser ──────────────────────────────────────────────────────────────
-SECTION_PATTERNS = {
-    "Executive Summary":       r"(?i)##\s*executive summary(.*?)(?=##|\Z)",
-    "Rates Market":            r"(?i)##\s*rates market(.*?)(?=##|\Z)",
-    "Equities":                r"(?i)##\s*equities(.*?)(?=##|\Z)",
-    "Crypto":                  r"(?i)##\s*crypto(.*?)(?=##|\Z)",
-    "FX":                      r"(?i)##\s*fx(.*?)(?=##|\Z)",
-    "Gamma & Positioning":     r"(?i)##\s*gamma.*?positioning(.*?)(?=##|\Z)",
-    "Risk Sentiment Dashboard":r"(?i)##\s*risk sentiment(.*?)(?=##|\Z)",
-    "What to Watch Today":     r"(?i)##\s*what to watch(.*?)(?=##|\Z)",
+SECTION_RE = {
+    "Executive Summary":        r"(?i)##\s*executive summary(.*?)(?=##|\Z)",
+    "Rates Market":             r"(?i)##\s*rates market(.*?)(?=##|\Z)",
+    "Equities":                 r"(?i)##\s*equities(.*?)(?=##|\Z)",
+    "Crypto":                   r"(?i)##\s*crypto(.*?)(?=##|\Z)",
+    "FX":                       r"(?i)##\s*fx(.*?)(?=##|\Z)",
+    "Gamma & Positioning":      r"(?i)##\s*gamma.*?positioning(.*?)(?=##|\Z)",
+    "Risk Sentiment Dashboard": r"(?i)##\s*risk sentiment(.*?)(?=##|\Z)",
+    "What to Watch Today":      r"(?i)##\s*what to watch(.*?)(?=##|\Z)",
 }
-
 SECTION_ICONS = {
-    "Executive Summary":        "📋",
-    "Rates Market":             "📈",
-    "Equities":                 "🏦",
-    "Crypto":                   "₿",
-    "FX":                       "💱",
-    "Gamma & Positioning":      "⚡",
-    "Risk Sentiment Dashboard": "🚦",
-    "What to Watch Today":      "👁",
+    "Executive Summary": "📋", "Rates Market": "📈", "Equities": "🏦",
+    "Crypto": "₿", "FX": "💱", "Gamma & Positioning": "⚡",
+    "Risk Sentiment Dashboard": "🚦", "What to Watch Today": "👁",
 }
 
 def parse_brief(text: str) -> dict:
-    sections = {}
-    for name, pattern in SECTION_PATTERNS.items():
-        m = re.search(pattern, text, re.DOTALL)
+    out = {}
+    for name, pat in SECTION_RE.items():
+        m = re.search(pat, text, re.DOTALL)
         if m:
-            sections[name] = m.group(1).strip()
-    if not sections and text.strip():
-        sections["Full Brief"] = text.strip()
-    return sections
-
-
-def render_brief_section(title: str, body: str):
-    icon = SECTION_ICONS.get(title, "•")
-    st.markdown(
-        f'<div class="section-label">{icon} {title}</div>',
-        unsafe_allow_html=True,
-    )
-    # Strip markdown link syntax for cleaner display
-    cleaned = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", body)
-    # Bullet points → proper markdown
-    st.markdown(cleaned)
+            out[name] = m.group(1).strip()
+    return out or ({"Full Brief": text.strip()} if text.strip() else {})
 
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(
-        '<div style="color:#f0b429;font-size:1rem;letter-spacing:2px;font-weight:bold;">⬛ MACRO TERMINAL</div>',
+        f'<div style="color:{ACCENT};font-size:0.95rem;letter-spacing:3px;'
+        f'font-weight:700;padding:4px 0 8px;">MACRO TERMINAL</div>',
         unsafe_allow_html=True,
     )
     st.markdown("---")
-    st.markdown("**Workflow**")
-    st.markdown(
-        """
-- **Market Base** — all-day broad tape
-- **Rates** — curve structure & spreads
+    st.markdown("**Tabs**")
+    st.markdown("""
+- **Market Base** — broad cross-asset tape
+- **Rates** — curve + spreads
 - **FX** — six-pair dashboard
-- **Macro Focus** — daily brief alignment
-- **Brief Sync** — paste & parse morning brief
-- **Cross-Asset** — risk sentiment overview
+- **Macro Focus** — daily brief names
+- **Brief Sync** — paste & parse brief
+- **Cross-Asset Risk** — regime dashboard
 """)
     st.markdown("---")
     st.markdown("**Watchlist**")
-    st.markdown("TLT · MDI.TO · CAR.UN · IBIT · BTC · USD/INR · 10Y · 30Y · VIX")
+    st.caption("TLT · MDI.TO · CAR.UN · IBIT · BTC · USD/INR · 10Y · 30Y · VIX")
     st.markdown("---")
-    refresh_btn = st.button("⟳ Refresh data", use_container_width=True)
-    if refresh_btn:
+    if st.button("⟳  Refresh data", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
-    st.caption(f"Last loaded: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    st.caption("Data: Yahoo Finance · 5-min cache")
+    st.caption(f"Loaded: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    st.caption("Source: Yahoo Finance · 5-min cache")
 
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown(
-    f"""
-    <div class="main-header">
+    f"""<div class="dash-header">
       <h1>MACRO MARKET DASHBOARD</h1>
-      <small>BROAD MARKET BASE + DAILY MACRO FOCUS + BRIEF SYNC &nbsp;|&nbsp;
-      UPDATED {datetime.now().strftime("%Y-%m-%d %H:%M")} ET</small>
-    </div>
-    """,
+      <small>MARKET BASE &nbsp;·&nbsp; RATES &nbsp;·&nbsp; FX &nbsp;·&nbsp;
+      MACRO FOCUS &nbsp;·&nbsp; BRIEF SYNC &nbsp;·&nbsp; CROSS-ASSET RISK
+      &nbsp;|&nbsp; {datetime.now().strftime("%Y-%m-%d %H:%M")} ET</small>
+    </div>""",
     unsafe_allow_html=True,
 )
 
-# ── Quick top-line strip ──────────────────────────────────────────────────────
-_topline = {
+# ── Top-line strip ────────────────────────────────────────────────────────────
+_top = build_table({
     "S&P 500": "^GSPC",
     "10Y Yld": "^TNX",
     "VIX":     "^VIX",
     "BTC":     "BTC-USD",
-    "DXY":     "DX-Y.NYB",
+    "DXY":     "DX=F",
     "Gold":    "GC=F",
-}
-_top_df = build_table(_topline)
-metric_strip(_top_df)
-st.markdown("<hr style='border-color:#1f1f1f;margin:6px 0;'>", unsafe_allow_html=True)
+})
+metric_strip(_top)
+st.markdown("<hr>", unsafe_allow_html=True)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-(
-    base_tab, rates_tab, fx_tab, focus_tab, brief_tab, risk_tab
-) = st.tabs([
-    "Market Base", "Rates", "FX", "Daily Macro Focus", "Brief Sync", "Cross-Asset Risk"
+base_tab, rates_tab, fx_tab, focus_tab, brief_tab, risk_tab = st.tabs([
+    "📊 Market Base", "📈 Rates", "💱 FX",
+    "🎯 Macro Focus", "📋 Brief Sync", "🚦 Cross-Asset Risk",
 ])
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — MARKET BASE
 # ═══════════════════════════════════════════════════════════════════════════════
 with base_tab:
-    for section, tickers in BASE_TICKERS.items():
-        st.markdown(f'<div class="section-label">▸ {section}</div>', unsafe_allow_html=True)
+    for section_name, tickers in BASE_TICKERS.items():
+        sec(section_name)
         df = build_table(tickers)
         metric_strip(df)
         render_table(df)
+        st.markdown("")
 
-    st.markdown('<div class="section-label">▸ Relative Performance (6-Month, % Return)</div>', unsafe_allow_html=True)
+    sec("Relative Performance — 6-Month % Return")
     c1, c2 = st.columns(2)
     with c1:
         plotly_multi_line({
-            "S&P 500": ("^GSPC", "#00cc66"),
+            "S&P 500": ("^GSPC", UP),
             "Nasdaq":  ("^IXIC", "#3399ff"),
-            "Russell": ("^RUT",  "#f0b429"),
+            "Russell": ("^RUT",  ACCENT),
             "Dow":     ("^DJI",  "#cc66ff"),
-        }, "U.S. Equities — 6M % Return")
+        }, "U.S. Equities — 6M % Return", height=340)
     with c2:
         plotly_multi_line({
             "BTC":  ("BTC-USD", "#f7931a"),
-            "IBIT": ("IBIT",    "#0080ff"),
-            "TLT":  ("TLT",     "#f0b429"),
-            "VIX":  ("^VIX",    "#ff3333"),
-        }, "BTC / IBIT / TLT / VIX — 6M % Return")
+            "IBIT": ("IBIT",    "#3399ff"),
+            "TLT":  ("TLT",     ACCENT),
+            "VIX":  ("^VIX",    DOWN),
+        }, "BTC · IBIT · TLT · VIX — 6M % Return", height=340)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — RATES
 # ═══════════════════════════════════════════════════════════════════════════════
 with rates_tab:
-    st.markdown('<div class="section-label">▸ Treasury Yields</div>', unsafe_allow_html=True)
+    sec("Treasury Yields")
     rates_df = build_table(BASE_TICKERS["Rates"])
     metric_strip(rates_df)
     render_table(rates_df)
 
-    # Curve spreads
-    rmap = {r["Name"]: r["Last"] for _, r in rates_df.iterrows() if r["Last"] is not None}
-    sc1, sc2, sc3 = st.columns(3)
-    if rmap.get("2Y") and rmap.get("5Y"):
-        sc1.metric("2s5s (bp)",  f"{(rmap['5Y']  - rmap['2Y'])  * 100:.1f}")
-    if rmap.get("5Y") and rmap.get("10Y"):
-        sc2.metric("5s10s (bp)", f"{(rmap['10Y'] - rmap['5Y'])  * 100:.1f}")
-    if rmap.get("10Y") and rmap.get("30Y"):
-        sc3.metric("10s30s (bp)",f"{(rmap['30Y'] - rmap['10Y']) * 100:.1f}")
+    st.markdown("")
+    rmap = {r["Name"]: r["Last"] for _, r in rates_df.iterrows() if pd.notna(r["Last"])}
+    s1, s2, s3, s4 = st.columns(4)
+    s1.metric("2s5s (bp)",   f"{(rmap['5Y']  - rmap['2Y'])  * 100:.1f}" if rmap.get("2Y")  and rmap.get("5Y")  else "—")
+    s2.metric("5s10s (bp)",  f"{(rmap['10Y'] - rmap['5Y'])  * 100:.1f}" if rmap.get("5Y")  and rmap.get("10Y") else "—")
+    s3.metric("10s30s (bp)", f"{(rmap['30Y'] - rmap['10Y']) * 100:.1f}" if rmap.get("10Y") and rmap.get("30Y") else "—")
+    s4.metric("2s30s (bp)",  f"{(rmap['30Y'] - rmap['2Y'])  * 100:.1f}" if rmap.get("2Y")  and rmap.get("30Y") else "—")
 
-    st.markdown('<div class="section-label">▸ Yield Curve Snapshot</div>', unsafe_allow_html=True)
+    sec("Yield Curve Snapshot")
     plotly_yield_curve()
 
-    c_l, c_r = st.columns(2)
-    with c_l:
-        plotly_line("^TNX", "10Y Treasury Yield", color="#f0b429")
-        plotly_line("^IRX", "2Y Treasury Yield",  color="#3399ff")
-    with c_r:
-        plotly_line("^TYX", "30Y Treasury Yield", color="#cc66ff")
-        plotly_line("^FVX", "5Y Treasury Yield",  color="#00cc66")
+    sec("Individual Yield Trends")
+    cl, cr = st.columns(2)
+    with cl:
+        plotly_line("^TNX", "10Y Treasury Yield",  color=ACCENT,    height=300)
+        plotly_line("^IRX", "2Y Treasury Yield",   color="#3399ff", height=300)
+    with cr:
+        plotly_line("^TYX", "30Y Treasury Yield",  color="#cc66ff", height=300)
+        plotly_line("^FVX", "5Y Treasury Yield",   color=UP,        height=300)
 
-    st.markdown('<div class="section-label">▸ TLT (20+ Year Treasury ETF)</div>', unsafe_allow_html=True)
-    plotly_candle("TLT", "TLT — iShares 20+ Year Treasury Bond ETF")
+    sec("TLT — iShares 20+ Year Treasury ETF")
+    plotly_candle("TLT", "TLT — 20+ Year Treasury Bond ETF", height=420)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 3 — FX
 # ═══════════════════════════════════════════════════════════════════════════════
 with fx_tab:
-    st.markdown('<div class="section-label">▸ FX Rates</div>', unsafe_allow_html=True)
+    sec("FX Snapshot")
     fx_df = build_table(BASE_TICKERS["FX"])
     metric_strip(fx_df)
     render_table(fx_df)
 
-    st.markdown('<div class="section-label">▸ DXY & Key Pairs — 6-Month Trend</div>', unsafe_allow_html=True)
+    sec("G3 Pairs — 6-Month % Return")
     plotly_multi_line({
         "EUR/USD": ("EURUSD=X", "#3399ff"),
-        "GBP/USD": ("GBPUSD=X", "#00cc66"),
+        "GBP/USD": ("GBPUSD=X", UP),
         "AUD/USD": ("AUDUSD=X", "#ffcc00"),
-    }, "G3 FX vs USD — 6M % Return")
+        "USD/CAD": ("CAD=X",    "#cc66ff"),
+    }, "G4 FX vs USD — 6M % Return", height=340)
 
-    c_l, c_r = st.columns(2)
-    with c_l:
-        plotly_line("INR=X",  "USD/INR (EM Stress Barometer)", color="#f0b429")
-        plotly_line("JPY=X",  "USD/JPY (Rate-Beta Express)",   color="#3399ff")
-    with c_r:
-        plotly_line("CAD=X",  "USD/CAD (Commodity Carry)",     color="#cc66ff")
-        plotly_line("EURUSD=X", "EUR/USD",                     color="#00cc66")
+    sec("Pair Charts")
+    cl, cr = st.columns(2)
+    with cl:
+        plotly_line("INR=X",    "USD/INR  (EM Stress Barometer)", color=ACCENT,    height=300)
+        plotly_line("JPY=X",    "USD/JPY  (Rate-Beta Express)",    color="#3399ff", height=300)
+    with cr:
+        plotly_line("CAD=X",    "USD/CAD  (Commodity Carry)",      color="#cc66ff", height=300)
+        plotly_line("EURUSD=X", "EUR/USD",                         color=UP,        height=300)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 4 — DAILY MACRO FOCUS
 # ═══════════════════════════════════════════════════════════════════════════════
 with focus_tab:
-    st.markdown(
-        '<div class="section-label">▸ Daily Brief Watchlist — Live Tape</div>',
-        unsafe_allow_html=True,
-    )
-    st.write("Aligned to the morning macro brief. Covers TLT, MDI (TSX), CAR.UN, IBIT, BTC, USD/INR, 10Y, 30Y, VIX.")
+    sec("Daily Brief Watchlist — Live Tape")
+    st.caption("Aligned to the morning brief · TLT · MDI (TSX) · CAR.UN · IBIT · BTC · USD/INR · 10Y · 30Y · VIX")
     focus_df = build_table(FOCUS_TICKERS)
     metric_strip(focus_df)
     render_table(focus_df)
 
+    sec("Charts")
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.markdown('<div class="section-label">▸ TLT</div>', unsafe_allow_html=True)
-        plotly_candle("TLT", "TLT", height=280)
-        st.markdown('<div class="section-label">▸ VIX</div>', unsafe_allow_html=True)
-        plotly_line("^VIX", "CBOE VIX", color="#ff3333")
+        plotly_candle("TLT",   "TLT",         height=380)
+        plotly_line("^VIX",    "VIX",          color=DOWN,  height=280)
     with c2:
-        st.markdown('<div class="section-label">▸ MDI.TO (Major Drilling)</div>', unsafe_allow_html=True)
-        plotly_candle("MDI.TO", "MDI — TSX: Major Drilling", height=280)
-        st.markdown('<div class="section-label">▸ CAR.UN</div>', unsafe_allow_html=True)
-        plotly_candle("CAR-UN.TO", "CAR.UN — Canadian Apt REIT", height=280)
+        plotly_candle("MDI.TO",    "MDI — TSX Major Drilling",  height=380)
+        plotly_candle("CAR-UN.TO", "CAR.UN — Cdn Apt REIT",     height=380)
     with c3:
-        st.markdown('<div class="section-label">▸ IBIT / BTC</div>', unsafe_allow_html=True)
-        plotly_candle("IBIT",    "IBIT — iShares Bitcoin Trust", height=280)
-        plotly_candle("BTC-USD", "Bitcoin (BTC-USD)",             height=280)
+        plotly_candle("IBIT",      "IBIT — iShares Bitcoin Trust", height=380)
+        plotly_candle("BTC-USD",   "Bitcoin (BTC-USD)",             height=380)
 
-    st.markdown('<div class="section-label">▸ Cross-Correlations (60-Day Rolling, Daily Returns)</div>', unsafe_allow_html=True)
-    corr_tickers = {
-        "BTC": "BTC-USD", "IBIT": "IBIT", "TLT": "TLT",
-        "SPY": "^GSPC",   "VIX":  "^VIX", "10Y": "^TNX",
-    }
-    price_frames = {}
-    for name, sym in corr_tickers.items():
-        df = load_history(sym)
-        if df is not None and not df.empty:
-            price_frames[name] = df["Close"].rename(name)
-    if price_frames:
-        combined = pd.concat(price_frames.values(), axis=1).dropna()
-        if len(combined) > 5:
-            rets = combined.pct_change().dropna()
-            corr_m = rets.tail(60).corr()
-            fig_corr = px.imshow(
+    sec("60-Day Return Correlation Matrix")
+    corr_syms = {"BTC": "BTC-USD", "IBIT": "IBIT", "TLT": "TLT",
+                 "SPX": "^GSPC",   "VIX":  "^VIX", "10Y": "^TNX"}
+    frames = {}
+    for name, sym in corr_syms.items():
+        d = load_history(sym)
+        if d is not None and not d.empty:
+            frames[name] = d["Close"].rename(name)
+    if len(frames) >= 3:
+        combined = pd.concat(frames.values(), axis=1).dropna()
+        if len(combined) > 10:
+            corr_m = combined.pct_change().dropna().tail(60).corr()
+            fig_c = px.imshow(
                 corr_m,
-                color_continuous_scale=[[0,"#ff3333"],[0.5,"#111111"],[1,"#00cc66"]],
+                color_continuous_scale=[[0, DOWN], [0.5, SURFACE2], [1, UP]],
                 zmin=-1, zmax=1,
                 text_auto=".2f",
-                title="60-Day Return Correlation Matrix",
+                title="60-Day Return Correlation",
             )
-            fig_corr.update_layout(
-                height=340,
-                coloraxis_showscale=True,
-                **PLOTLY_DARK,
-            )
-            fig_corr.update_traces(textfont_size=11)
-            st.plotly_chart(fig_corr, use_container_width=True)
+            fig_c.update_layout(height=360, coloraxis_showscale=True, **PT)
+            fig_c.update_traces(textfont_size=12)
+            st.plotly_chart(fig_c, use_container_width=True)
+    else:
+        st.info("Not enough data for correlation matrix.")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 5 — BRIEF SYNC
 # ═══════════════════════════════════════════════════════════════════════════════
 with brief_tab:
-    st.markdown('<div class="section-label">▸ Morning Brief — Paste & Analyse</div>', unsafe_allow_html=True)
-    st.markdown(
-        "Paste the Perplexity morning macro brief (Markdown format) below. "
-        "The dashboard will parse it into sections and display live data alongside."
-    )
+    sec("Morning Brief — Paste & Parse")
+    st.caption("Paste the full Perplexity macro brief below. Sections are auto-detected by ## headings.")
 
     brief_text = st.text_area(
-        "Morning Macro Brief",
-        height=300,
-        placeholder="## Executive Summary\n- Paste the full brief here...\n\n## Rates Market\n...",
+        "brief_input",
+        height=260,
+        placeholder=(
+            "## Executive Summary\n"
+            "- Paste the full brief here...\n\n"
+            "## Rates Market\n...\n\n"
+            "## Equities\n..."
+        ),
         label_visibility="collapsed",
     )
 
     if brief_text.strip():
         sections = parse_brief(brief_text)
-
         if sections:
-            st.markdown("---")
-            # ── Live snapshot column alongside parsed text ──
+            st.markdown("")
             col_brief, col_live = st.columns([3, 2])
-
             with col_brief:
-                st.markdown('<div class="section-label">▸ Brief Sections</div>', unsafe_allow_html=True)
+                sec("Parsed Sections")
                 for title, body in sections.items():
-                    with st.expander(f"{SECTION_ICONS.get(title, '•')} {title}", expanded=(title == "Executive Summary")):
-                        render_brief_section(title, body)
-
+                    icon = SECTION_ICONS.get(title, "•")
+                    with st.expander(f"{icon}  {title}", expanded=(title == "Executive Summary")):
+                        cleaned = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", body)
+                        st.markdown(cleaned)
             with col_live:
-                st.markdown('<div class="section-label">▸ Live Data Panel</div>', unsafe_allow_html=True)
+                sec("Live Data")
                 _live = build_table({
-                    "10Y Yld":  "^TNX",
-                    "30Y Yld":  "^TYX",
-                    "S&P 500":  "^GSPC",
-                    "VIX":      "^VIX",
-                    "BTC":      "BTC-USD",
-                    "TLT":      "TLT",
-                    "USD/INR":  "INR=X",
-                    "USD/JPY":  "JPY=X",
+                    "10Y": "^TNX", "30Y": "^TYX",
+                    "SPX": "^GSPC", "VIX": "^VIX",
+                    "BTC": "BTC-USD", "TLT": "TLT",
+                    "INR": "INR=X",   "JPY": "JPY=X",
                 })
                 metric_strip(_live.head(4))
                 render_table(_live)
-
-                st.markdown('<div class="section-label" style="margin-top:12px">▸ Key Charts</div>', unsafe_allow_html=True)
-                plotly_line("^TNX",   "10Y Yield",   color="#f0b429", height=160)
-                plotly_line("^GSPC",  "S&P 500",     color="#00cc66", height=160)
-                plotly_line("BTC-USD","BTC",          color="#f7931a", height=160)
+                st.markdown("")
+                plotly_line("^TNX",    "10Y Yield",  color=ACCENT,    height=200)
+                plotly_line("^GSPC",   "S&P 500",    color=UP,        height=200)
+                plotly_line("BTC-USD", "BTC",        color="#f7931a", height=200)
         else:
-            st.info("Could not detect standard sections. Displaying as plain text.")
+            st.info("No sections detected — displaying as plain text.")
             st.markdown(brief_text)
     else:
-        # Show placeholder when nothing is pasted
         st.markdown(
-            """
-<div style="background:#111;border:1px solid #222;border-radius:4px;padding:20px;text-align:center;color:#555;font-family:monospace;">
-  <div style="font-size:2rem;">📋</div>
-  <div style="margin-top:8px;">Paste the morning Perplexity brief above to unlock parsing.</div>
-  <div style="font-size:0.75rem;margin-top:4px;">
-    Sections detected: Executive Summary · Rates · Equities · Crypto · FX · Gamma · Risk · Watch
-  </div>
-</div>
-""",
+            f"""<div style="background:{SURFACE};border:1px solid {BORDER};border-radius:6px;
+            padding:28px;text-align:center;color:{TXT_MUTED};">
+            <div style="font-size:2rem;margin-bottom:8px;">📋</div>
+            <div style="font-size:0.9rem;">Paste the Perplexity morning brief above.</div>
+            <div style="font-size:0.75rem;margin-top:6px;color:{TXT_MUTED};">
+            Sections parsed: Executive Summary · Rates · Equities · Crypto · FX · Gamma · Risk · Watch
+            </div></div>""",
             unsafe_allow_html=True,
         )
-        # Still show a live snapshot
-        st.markdown('<div class="section-label" style="margin-top:16px">▸ Live Snapshot (while you wait for the brief)</div>', unsafe_allow_html=True)
-        _snap_df = build_table({
-            "10Y Yld":  "^TNX",
-            "30Y Yld":  "^TYX",
-            "VIX":      "^VIX",
-            "S&P 500":  "^GSPC",
-            "BTC":      "BTC-USD",
-            "IBIT":     "IBIT",
-            "TLT":      "TLT",
-            "USD/INR":  "INR=X",
+        st.markdown("")
+        sec("Live Snapshot")
+        _snap = build_table({
+            "10Y Yld": "^TNX", "30Y Yld": "^TYX", "VIX": "^VIX",
+            "S&P 500": "^GSPC", "BTC": "BTC-USD",
+            "IBIT": "IBIT", "TLT": "TLT", "USD/INR": "INR=X",
         })
-        metric_strip(_snap_df.head(4))
-        render_table(_snap_df)
+        metric_strip(_snap.head(4))
+        render_table(_snap)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 6 — CROSS-ASSET RISK
 # ═══════════════════════════════════════════════════════════════════════════════
 with risk_tab:
-    st.markdown('<div class="section-label">▸ Cross-Asset Risk Dashboard</div>', unsafe_allow_html=True)
+    sec("Cross-Asset Risk Dashboard")
 
-    # VIX regime
     vix_df  = load_history("^VIX")
     spx_df  = load_history("^GSPC")
     tlt_df  = load_history("TLT")
     btc_df  = load_history("BTC-USD")
-    hy_df   = load_history("HYG")   # HY proxy
-    ig_df   = load_history("LQD")   # IG proxy
-    dxy_df  = load_history("DX-Y.NYB")
+    hy_df   = load_history("HYG")
+    ig_df   = load_history("LQD")
+    dxy_df  = load_history("DX=F")
     gold_df = load_history("GC=F")
 
-    def last_val(df):
-        return float(df["Close"].iloc[-1]) if df is not None and not df.empty else None
+    def _last(df): return float(df["Close"].iloc[-1]) if df is not None and not df.empty else None
+    def _dpct(df):
+        if df is None or df.empty or len(df) < 2: return None
+        return (float(df["Close"].iloc[-1]) / float(df["Close"].iloc[-2]) - 1) * 100
 
-    def day_pct(df):
-        if df is None or df.empty or len(df) < 2:
-            return None
-        return (df["Close"].iloc[-1] / df["Close"].iloc[-2] - 1) * 100
+    vix_v  = _last(vix_df);  vix_c  = _dpct(vix_df)
+    spx_v  = _last(spx_df);  spx_c  = _dpct(spx_df)
+    hy_v   = _last(hy_df);   hy_c   = _dpct(hy_df)
+    btc_v  = _last(btc_df);  btc_c  = _dpct(btc_df)
+    tlt_v  = _last(tlt_df)
+    dxy_v  = _last(dxy_df)
+    gold_v = _last(gold_df)
+    ig_v   = _last(ig_df)
 
-    vix_val  = last_val(vix_df)
-    spx_val  = last_val(spx_df)
-    tlt_val  = last_val(tlt_df)
-    btc_val  = last_val(btc_df)
-    hy_val   = last_val(hy_df)
-    ig_val   = last_val(ig_df)
-    dxy_val  = last_val(dxy_df)
-    gold_val = last_val(gold_df)
-
-    vix_chg  = day_pct(vix_df)
-    spx_chg  = day_pct(spx_df)
-    hy_chg   = day_pct(hy_df)
-    btc_chg  = day_pct(btc_df)
-
-    # Regime: crude VIX-based rule
-    if vix_val is not None:
-        if vix_val < 15:
-            regime_badge = '<span class="badge-risk-on">RISK-ON</span>'
-            regime_color = "#00cc66"
-        elif vix_val < 25:
-            regime_badge = '<span class="badge-neutral">CAUTIOUS NEUTRAL</span>'
-            regime_color = "#ffcc00"
-        elif vix_val < 35:
-            regime_badge = '<span class="badge-risk-off">RISK-OFF</span>'
-            regime_color = "#ff3333"
-        else:
-            regime_badge = '<span class="badge-risk-off">STRESS / CRISIS</span>'
-            regime_color = "#ff0000"
+    # Regime badge
+    if vix_v is not None:
+        if   vix_v < 15:  badge = f'<span class="badge-on">RISK-ON</span>';            rc = UP
+        elif vix_v < 25:  badge = f'<span class="badge-neu">CAUTIOUS NEUTRAL</span>'; rc = "#ffcc00"
+        elif vix_v < 35:  badge = f'<span class="badge-off">RISK-OFF</span>';          rc = DOWN
+        else:             badge = f'<span class="badge-off">STRESS / CRISIS</span>';   rc = DOWN
     else:
-        regime_badge = '<span class="badge-neutral">UNKNOWN</span>'
-        regime_color = "#555"
+        badge = f'<span class="badge-neu">UNKNOWN</span>'; rc = TXT_MUTED
 
-    st.markdown(f"**Current Regime:** {regime_badge}", unsafe_allow_html=True)
+    st.markdown(f"**Regime:** {badge} &nbsp;&nbsp; VIX: **{vix_v:.2f}**" if vix_v else f"**Regime:** {badge}", unsafe_allow_html=True)
     st.markdown("")
 
-    r1c1, r1c2, r1c3, r1c4 = st.columns(4)
-    r1c1.metric("VIX",        f"{vix_val:.2f}"  if vix_val  else "—", f"{vix_chg:+.2f}%"  if vix_chg  else None)
-    r1c2.metric("S&P 500",    f"{spx_val:,.0f}" if spx_val  else "—", f"{spx_chg:+.2f}%"  if spx_chg  else None)
-    r1c3.metric("HYG (HY proxy)", f"{hy_val:.2f}" if hy_val else "—", f"{hy_chg:+.2f}%"   if hy_chg   else None)
-    r1c4.metric("BTC",        f"{btc_val:,.0f}" if btc_val  else "—", f"{btc_chg:+.2f}%"  if btc_chg  else None)
+    r1, r2, r3, r4 = st.columns(4)
+    r1.metric("VIX",          f"{vix_v:.2f}"   if vix_v  else "—", f"{vix_c:+.2f}%"  if vix_c  else None)
+    r2.metric("S&P 500",      f"{spx_v:,.0f}"  if spx_v  else "—", f"{spx_c:+.2f}%"  if spx_c  else None)
+    r3.metric("HYG (HY ETF)", f"{hy_v:.2f}"    if hy_v   else "—", f"{hy_c:+.2f}%"   if hy_c   else None)
+    r4.metric("BTC",          f"{btc_v:,.0f}"  if btc_v  else "—", f"{btc_c:+.2f}%"  if btc_c  else None)
 
-    r2c1, r2c2, r2c3, r2c4 = st.columns(4)
-    r2c1.metric("TLT",  f"{tlt_val:.2f}" if tlt_val  else "—")
-    r2c2.metric("DXY",  f"{dxy_val:.2f}" if dxy_val  else "—")
-    r2c3.metric("Gold", f"{gold_val:,.1f}" if gold_val else "—")
-    r2c4.metric("LQD (IG proxy)", f"{ig_val:.2f}" if ig_val else "—")
+    r5, r6, r7, r8 = st.columns(4)
+    r5.metric("TLT",          f"{tlt_v:.2f}"   if tlt_v  else "—")
+    r6.metric("DXY",          f"{dxy_v:.2f}"   if dxy_v  else "—")
+    r7.metric("Gold",         f"{gold_v:,.1f}" if gold_v else "—")
+    r8.metric("LQD (IG ETF)", f"{ig_v:.2f}"    if ig_v   else "—")
 
-    st.markdown('<div class="section-label" style="margin-top:12px">▸ VIX Regime History</div>', unsafe_allow_html=True)
+    sec("VIX Regime History")
     if vix_df is not None and not vix_df.empty:
-        fig_vix = go.Figure()
-        fig_vix.add_hrect(y0=0,  y1=15, fillcolor="rgba(0,204,102,0.06)", line_width=0)
-        fig_vix.add_hrect(y0=15, y1=25, fillcolor="rgba(255,204,0,0.06)",  line_width=0)
-        fig_vix.add_hrect(y0=25, y1=35, fillcolor="rgba(255,51,51,0.06)",  line_width=0)
-        fig_vix.add_hrect(y0=35, y1=100,fillcolor="rgba(204,0,0,0.08)",    line_width=0)
-        for lvl, col, lbl in [(15,"#00cc66","Risk-On"), (25,"#ffcc00","Elevated"), (35,"#ff3333","Stress")]:
-            fig_vix.add_hline(y=lvl, line_dash="dot", line_color=col,
-                              annotation_text=lbl, annotation_font_color=col,
-                              annotation_position="right")
-        fig_vix.add_trace(go.Scatter(
+        fig_v = go.Figure()
+        for y0, y1, col in [(0,15,UP),(15,25,"#ffcc00"),(25,35,DOWN),(35,80,DOWN)]:
+            fig_v.add_hrect(y0=y0, y1=y1, fillcolor=hex_rgba(col, 0.05), line_width=0)
+        for lvl, col, lbl in [(15,UP,"Risk-On <15"),(25,"#ffcc00","Elevated 15-25"),(35,DOWN,"Stress >35")]:
+            fig_v.add_hline(y=lvl, line_dash="dot", line_color=col, line_width=1,
+                            annotation_text=lbl, annotation_font_color=col,
+                            annotation_position="right")
+        fig_v.add_trace(go.Scatter(
             x=vix_df.index, y=vix_df["Close"],
-            mode="lines", line=dict(color="#ff3333", width=1.5),
-            fill="tozeroy", fillcolor="rgba(255,51,51,0.08)",
-            name="VIX",
-            hovertemplate="%{x|%b %d}<br>VIX <b>%{y:.2f}</b><extra></extra>",
+            mode="lines", line=dict(color=DOWN, width=2),
+            fill="tozeroy", fillcolor=hex_rgba(DOWN, 0.08),
+            hovertemplate="<b>%{x|%b %d}</b>  VIX %{y:.2f}<extra></extra>",
         ))
-        fig_vix.update_layout(height=280, showlegend=False, **PLOTLY_DARK)
-        st.plotly_chart(fig_vix, use_container_width=True)
+        fig_v.update_layout(height=320, showlegend=False, **PT)
+        st.plotly_chart(fig_v, use_container_width=True)
 
-    st.markdown('<div class="section-label">▸ Risk Proxy Overlay (6-Month % Return)</div>', unsafe_allow_html=True)
+    sec("Cross-Asset 6-Month % Return")
     plotly_multi_line({
-        "S&P 500":  ("^GSPC",     "#00cc66"),
-        "TLT":      ("TLT",       "#f0b429"),
-        "HYG":      ("HYG",       "#3399ff"),
-        "Gold":     ("GC=F",      "#ffcc00"),
-        "BTC":      ("BTC-USD",   "#f7931a"),
-        "DXY":      ("DX-Y.NYB",  "#cc66ff"),
-    }, "Cross-Asset 6-Month % Return")
+        "S&P 500": ("^GSPC",   UP),
+        "TLT":     ("TLT",     ACCENT),
+        "HYG":     ("HYG",     "#3399ff"),
+        "Gold":    ("GC=F",    "#ffcc00"),
+        "BTC":     ("BTC-USD", "#f7931a"),
+        "DXY":     ("DX=F",    "#cc66ff"),
+    }, "Cross-Asset 6-Month % Return", height=380)
 
-    st.markdown('<div class="section-label">▸ Gamma / Positioning Commentary</div>', unsafe_allow_html=True)
-    st.markdown(
-        """
-| Signal | Level | Implication |
-|--------|-------|-------------|
-| VIX (live) | ← see above | <15 = positive gamma suppression / >25 = vol expansion risk |
-| 0DTE Flow | Monitor intraday | Break of dominant OI cluster can accelerate realised vol |
-| TLT Put/Call | Proxy via price action | Duration selling = bear-steepener pressure |
-| SPX Pinning | Near large OI strikes | Dealer buy-low/sell-high hedging damps moves |
-| BTC Beta | Correlated to liquidity | High real-yield / strong DXY = BTC headwind |
+    sec("Gamma / Positioning Framework")
+    st.markdown(f"""
+| Signal | Threshold | Implication |
+|--------|-----------|-------------|
+| **VIX** | <15 risk-on · 15-25 neutral · >25 risk-off · >35 stress | Regime classification |
+| **0DTE Flow** | Break of dominant OI cluster | Can accelerate realised vol rapidly |
+| **TLT price action** | Sustained selling | Bear-steepener pressure on duration |
+| **SPX Pinning** | Near large open-interest strikes | Dealer buy-low/sell-high damps moves |
+| **BTC β** | Rises with liquidity / falls with real yields | High DXY + high real yield = headwind |
+| **Positive γ regime** | Spot near max OI strike | Mean-reversion, vol suppression |
+| **Negative γ regime** | Spot through major strike | Trend-following, vol expansion |
 
-> **Note:** Live GEX data requires SpotGamma / Tier1Alpha. The above is a structural framework.
-> Positive gamma → mean-reversion. Negative gamma → trend-following.
-"""
-    )
+> Live GEX requires SpotGamma / Tier1Alpha. The above is the structural decision framework.
+""")
