@@ -31,11 +31,11 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
 /* ---- header bar ---- */
 .main-header {
     background: linear-gradient(90deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
-    border-bottom: 1px solid #ff6600;
+    border-bottom: 1px solid #f0b429;
     padding: 10px 20px;
     margin-bottom: 16px;
 }
-.main-header h1 { color: #ff6600; margin: 0; font-size: 1.4rem; letter-spacing: 2px; }
+.main-header h1 { color: #f0b429; margin: 0; font-size: 1.4rem; letter-spacing: 2px; }
 .main-header small { color: #888; font-size: 0.75rem; letter-spacing: 1px; }
 
 /* ---- metric cards ---- */
@@ -67,14 +67,14 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
     border-bottom: 2px solid transparent !important;
 }
 [data-testid="stTabs"] button[aria-selected="true"] {
-    color: #ff6600 !important;
-    border-bottom: 2px solid #ff6600 !important;
+    color: #f0b429 !important;
+    border-bottom: 2px solid #f0b429 !important;
     background: transparent !important;
 }
 
 /* ---- section labels ---- */
 .section-label {
-    color: #ff6600;
+    color: #f0b429;
     font-size: 0.7rem;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -227,7 +227,7 @@ def styled_dataframe(df: pd.DataFrame):
     }).set_table_styles([
         {"selector": "th", "props": [
             ("background-color", "#1a1a1a"),
-            ("color", "#ff6600"),
+            ("color", "#f0b429"),
             ("font-size", "11px"),
             ("letter-spacing", "1px"),
             ("text-transform", "uppercase"),
@@ -247,7 +247,7 @@ def metric_strip(df: pd.DataFrame):
 
 
 # ── Plotly chart helpers ──────────────────────────────────────────────────────
-def plotly_line(symbol: str, title: str, color: str = "#ff6600", height: int = 240):
+def plotly_line(symbol: str, title: str, color: str = "#f0b429", height: int = 240):
     df = load_history(symbol)
     if df is None or df.empty:
         st.warning(f"No data: {title}")
@@ -258,11 +258,11 @@ def plotly_line(symbol: str, title: str, color: str = "#ff6600", height: int = 2
         mode="lines",
         line=dict(color=color, width=1.5),
         fill="tozeroy",
-        fillcolor=color.replace("#", "rgba(").rstrip(")") + ",0.07)" if color.startswith("#") else "rgba(255,102,0,0.07)",
+        fillcolor=color.replace("#", "rgba(").rstrip(")") + ",0.07)" if color.startswith("#") else "rgba(240,180,41,0.07)",
         name=title,
         hovertemplate="%{x|%b %d}<br><b>%{y:.4f}</b><extra></extra>",
     ))
-    fig.update_layout(title=dict(text=title, font=dict(color="#ff6600", size=12)),
+    fig.update_layout(title=dict(text=title, font=dict(color="#f0b429", size=12)),
                       height=height, showlegend=False, **PLOTLY_DARK)
     st.plotly_chart(fig, use_container_width=True)
 
@@ -290,7 +290,7 @@ def plotly_candle(symbol: str, title: str, period: str = "3mo", height: int = 32
         showlegend=False,
     ), row=2, col=1)
     fig.update_layout(
-        title=dict(text=title, font=dict(color="#ff6600", size=12)),
+        title=dict(text=title, font=dict(color="#f0b429", size=12)),
         height=height, xaxis_rangeslider_visible=False, showlegend=False,
         **PLOTLY_DARK,
     )
@@ -311,19 +311,19 @@ def plotly_yield_curve():
         st.warning("No yield data available")
         return
     labels = [f"{t}Y" for t in tenors]
-    color  = "#ff6600"
+    color  = "#f0b429"
     fig = go.Figure()
     fig.add_trace(go.Scatter(
         x=tenors, y=yields, mode="lines+markers+text",
         text=[f"{y:.2f}%" for y in yields],
         textposition="top center",
-        textfont=dict(color="#ff6600", size=11),
+        textfont=dict(color="#f0b429", size=11),
         line=dict(color=color, width=2),
         marker=dict(color=color, size=8),
         hovertemplate="<b>%{x}Y</b><br>%{y:.3f}%<extra></extra>",
     ))
     fig.update_layout(
-        title=dict(text="U.S. Treasury Yield Curve (Snapshot)", font=dict(color="#ff6600", size=12)),
+        title=dict(text="U.S. Treasury Yield Curve (Snapshot)", font=dict(color="#f0b429", size=12)),
         xaxis=dict(tickvals=tenors, ticktext=labels, gridcolor="#1f1f1f"),
         yaxis=dict(tickformat=".2f", ticksuffix="%", gridcolor="#1f1f1f"),
         height=280,
@@ -349,7 +349,7 @@ def plotly_multi_line(symbols_colors: dict, title: str, height: int = 280, pct_b
             hovertemplate=f"<b>{label}</b>: %{{y:.2f}}<extra></extra>",
         ))
     fig.update_layout(
-        title=dict(text=title, font=dict(color="#ff6600", size=12)),
+        title=dict(text=title, font=dict(color="#f0b429", size=12)),
         height=height,
         legend=dict(orientation="h", yanchor="bottom", y=1.02, bgcolor="rgba(0,0,0,0)"),
         **PLOTLY_DARK,
@@ -408,7 +408,7 @@ def render_brief_section(title: str, body: str):
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown(
-        '<div style="color:#ff6600;font-size:1rem;letter-spacing:2px;font-weight:bold;">⬛ MACRO TERMINAL</div>',
+        '<div style="color:#f0b429;font-size:1rem;letter-spacing:2px;font-weight:bold;">⬛ MACRO TERMINAL</div>',
         unsafe_allow_html=True,
     )
     st.markdown("---")
@@ -482,14 +482,14 @@ with base_tab:
         plotly_multi_line({
             "S&P 500": ("^GSPC", "#00cc66"),
             "Nasdaq":  ("^IXIC", "#3399ff"),
-            "Russell": ("^RUT",  "#ff6600"),
+            "Russell": ("^RUT",  "#f0b429"),
             "Dow":     ("^DJI",  "#cc66ff"),
         }, "U.S. Equities — 6M % Return")
     with c2:
         plotly_multi_line({
             "BTC":  ("BTC-USD", "#f7931a"),
             "IBIT": ("IBIT",    "#0080ff"),
-            "TLT":  ("TLT",     "#ff6600"),
+            "TLT":  ("TLT",     "#f0b429"),
             "VIX":  ("^VIX",    "#ff3333"),
         }, "BTC / IBIT / TLT / VIX — 6M % Return")
 
@@ -517,7 +517,7 @@ with rates_tab:
 
     c_l, c_r = st.columns(2)
     with c_l:
-        plotly_line("^TNX", "10Y Treasury Yield", color="#ff6600")
+        plotly_line("^TNX", "10Y Treasury Yield", color="#f0b429")
         plotly_line("^IRX", "2Y Treasury Yield",  color="#3399ff")
     with c_r:
         plotly_line("^TYX", "30Y Treasury Yield", color="#cc66ff")
@@ -544,7 +544,7 @@ with fx_tab:
 
     c_l, c_r = st.columns(2)
     with c_l:
-        plotly_line("INR=X",  "USD/INR (EM Stress Barometer)", color="#ff6600")
+        plotly_line("INR=X",  "USD/INR (EM Stress Barometer)", color="#f0b429")
         plotly_line("JPY=X",  "USD/JPY (Rate-Beta Express)",   color="#3399ff")
     with c_r:
         plotly_line("CAD=X",  "USD/CAD (Commodity Carry)",     color="#cc66ff")
@@ -656,7 +656,7 @@ with brief_tab:
                 st.dataframe(styled_dataframe(_live), use_container_width=True, hide_index=True)
 
                 st.markdown('<div class="section-label" style="margin-top:12px">▸ Key Charts</div>', unsafe_allow_html=True)
-                plotly_line("^TNX",   "10Y Yield",   color="#ff6600", height=160)
+                plotly_line("^TNX",   "10Y Yield",   color="#f0b429", height=160)
                 plotly_line("^GSPC",  "S&P 500",     color="#00cc66", height=160)
                 plotly_line("BTC-USD","BTC",          color="#f7931a", height=160)
         else:
@@ -786,7 +786,7 @@ with risk_tab:
     st.markdown('<div class="section-label">▸ Risk Proxy Overlay (6-Month % Return)</div>', unsafe_allow_html=True)
     plotly_multi_line({
         "S&P 500":  ("^GSPC",     "#00cc66"),
-        "TLT":      ("TLT",       "#ff6600"),
+        "TLT":      ("TLT",       "#f0b429"),
         "HYG":      ("HYG",       "#3399ff"),
         "Gold":     ("GC=F",      "#ffcc00"),
         "BTC":      ("BTC-USD",   "#f7931a"),
